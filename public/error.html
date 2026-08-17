@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Failed</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .scale-up { animation: scaleUp 0.4s ease-out forwards; }
+        @keyframes scaleUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 p-4 md:p-8 text-slate-900">
+
+    <div class="max-w-xl mx-auto mt-20">
+        <div class="bg-white p-16 rounded-[3rem] border shadow-2xl text-center scale-up">
+            <i data-lucide="x-circle" class="mx-auto text-red-500 mb-6 w-20 h-20"></i>
+            <h2 class="text-4xl font-black mb-4">Payment Not Completed</h2>
+            <p class="mb-8 text-slate-500 text-lg">Your transaction was not successful. Please try again.</p>
+            <a href="/" class="bg-slate-900 text-white px-12 py-4 rounded-[2rem] font-black uppercase tracking-widest hover:bg-slate-700 transition shadow-lg inline-block">
+                Try Again
+            </a>
+        </div>
+    </div>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>
+</script>
+</body>
+</html>

@@ -5,240 +5,119 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OneTicket Fintech | OneKhusa Reference</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="/socket.io/socket.io.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        .scale-up { animation: scaleUp 0.5s ease-out; }
+        .scale-up { animation: scaleUp 0.4s ease-out forwards; }
         @keyframes scaleUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body class="min-h-screen bg-slate-50 p-4 md:p-8 text-slate-900">
 
-    <!-- VERIFICATION OVERLAY (Shows when returning from OneKhusa) -->
-    <div id="verify-overlay" class="hidden fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-12 rounded-[3rem] shadow-2xl text-center max-w-sm w-full scale-up">
-            <div id="verify-icon" class="text-blue-600 text-6xl mb-6 flex justify-center">
-                 <i data-lucide="loader-2" class="w-16 h-16 animate-spin"></i>
-            </div>
-            <h2 id="verify-title" class="text-2xl font-black text-slate-800">Verifying Payment</h2>
-            <p id="verify-msg" class="text-slate-500 mt-2">Connecting to OneKhusa... Please wait.</p>
-        </div>
-    </div>
-
-    <div id="app" class="max-w-7xl mx-auto">
+    <div id="app" class="max-w-4xl mx-auto">
         <!-- Header -->
-        <header class="flex flex-col md:flex-row justify-between items-center mb-10">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-12">
             <h1 class="text-3xl font-black text-blue-700 uppercase tracking-tighter">
                 ONETICKET <span class="text-slate-300 font-light italic text-xl">FINTECH</span>
             </h1>
-            <div class="flex bg-white p-1.5 rounded-2xl border shadow-sm mt-4 md:mt-0">
-                <button onclick="switchView('tickets')" id="tab-tickets" class="view-tab px-8 py-2 rounded-xl font-bold text-xs bg-blue-600 text-white shadow-md">COLLECTIONS</button>
-                <button onclick="switchView('payouts')" id="tab-payouts" class="view-tab px-8 py-2 rounded-xl font-bold text-xs text-slate-400">DISBURSEMENTS</button>
+            <div class="bg-blue-100 text-blue-700 px-4 py-1 rounded-full text-xs font-bold mt-4 md:mt-0 flex items-center gap-2">
+                <span class="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span> NODE.JS HOSTED CHECKOUT
             </div>
         </header>
 
-        <!-- Main Content Area -->
-        <main id="main-content">
-            
-            <!-- Success Screen (Hidden by default) -->
-            <div id="view-success" class="hidden bg-white p-12 rounded-[3rem] border shadow-2xl text-center scale-up">
-                <i data-lucide="party-popper" class="mx-auto text-emerald-500 mb-6 w-20 h-20"></i>
-                <h2 class="text-4xl font-black mb-4">Payment Verified!</h2>
-                <p class="mb-8 text-slate-500">Your ticket has been issued successfully.</p>
-                <button onclick="resetApp()" class="bg-blue-600 text-white px-12 py-4 rounded-[2rem] font-black uppercase tracking-widest hover:bg-blue-700 transition">Buy Another</button>
-            </div>
+        <main>
+            <!-- Purchase View -->
+            <div id="view-purchase" class="max-w-xl mx-auto space-y-6">
+                <div class="bg-white p-10 rounded-[3rem] border shadow-sm">
+                    <div class="text-center">
+                        <i data-lucide="ticket" class="mx-auto text-blue-600 mb-4 opacity-20 w-16 h-16"></i>
+                        <h2 class="text-2xl font-bold mb-2 text-slate-400">Node.js Hosted Checkout</h2>
+                        <p class="text-sm text-slate-500 mb-6">Enter the payment details — you'll be redirected to the OneKhusa hosted checkout page to complete payment.</p>
+                    </div>
 
-            <!-- Collections View -->
-            <div id="view-tickets" class="max-w-2xl mx-auto space-y-6">
-                <div class="bg-white p-10 rounded-[3rem] border shadow-sm text-center">
-                    <i data-lucide="ticket" class="mx-auto text-blue-600 mb-4 opacity-20 w-16 h-16"></i>
-                    <h2 class="text-2xl font-bold mb-2 text-slate-400">Showcase Entry</h2>
-                    <p class="text-4xl font-black mb-10">MWK 2,500</p>
-                    
-                    <button id="buyBtn" onclick="handleBuy()" class="w-full bg-slate-900 text-white py-5 rounded-[2rem] font-black text-lg flex justify-center items-center gap-3 hover:bg-blue-600 transition disabled:opacity-50">
+                    <div class="space-y-4 text-left">
+                        <div>
+                            <label class="text-xs font-bold uppercase tracking-widest text-slate-400">Reference Number (5-25 alphanumeric)</label>
+                            <div class="flex gap-2 mt-1">
+                                <input id="reference" type="text" maxlength="25" placeholder="e.g. 1020XDFS76GS777"
+                                       class="flex-1 px-4 py-3 rounded-2xl border border-slate-200 focus:border-blue-400 focus:outline-none" />
+                                <button type="button" onclick="generateRef()"
+                                        class="px-4 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-sm font-bold text-slate-600">Generate</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="text-xs font-bold uppercase tracking-widest text-slate-400">Amount</label>
+                            <input id="amount" type="number" step="0.01" min="0.01" placeholder="e.g. 2500.00"
+                                   class="mt-1 w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-blue-400 focus:outline-none" />
+                        </div>
+
+                        <div>
+                            <label class="text-xs font-bold uppercase tracking-widest text-slate-400">Description</label>
+                            <input id="description" type="text" placeholder="e.g. Samsung 85inch TV purchase"
+                                   class="mt-1 w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-blue-400 focus:outline-none" />
+                        </div>
+                    </div>
+
+                    <button id="buyBtn" onclick="handleBuy()" class="mt-6 w-full bg-slate-900 text-white py-6 rounded-[2rem] font-black text-xl flex justify-center items-center gap-3 hover:bg-blue-600 transition disabled:opacity-50 shadow-xl">
                         <i data-lucide="credit-card"></i>
-                        <span id="buyBtnText">PURCHASE TICKET</span>
+                        <span id="buyBtnText">PURCHASE WITH HOSTED CHECKOUT</span>
                     </button>
                 </div>
             </div>
-
-            <!-- Payouts View (Hidden by default) -->
-            <div id="view-payouts" class="hidden grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <!-- Instant Withdrawal -->
-                <div class="bg-white p-10 rounded-[3rem] border shadow-sm space-y-6">
-                    <h2 class="text-xl font-black flex items-center gap-3 uppercase text-slate-800">
-                        <i data-lucide="zap" class="text-amber-500 fill-amber-500"></i> Instant Withdrawal
-                    </h2>
-                    <div class="space-y-4">
-                        <input type="number" id="payoutAmount" value="2500" class="w-full border-2 border-slate-100 p-4 rounded-2xl bg-slate-50 font-bold outline-blue-500">
-                        <input type="text" id="payoutAccount" placeholder="Account Number (e.g. 3333888800)" class="w-full border-2 border-slate-100 p-4 rounded-2xl bg-slate-50 font-bold outline-blue-500">
-                        <button id="singlePayoutBtn" onclick="handleSinglePayout()" class="w-full bg-blue-600 text-white py-5 rounded-3xl font-black flex justify-center items-center gap-3 hover:bg-blue-700 transition disabled:opacity-50">
-                            <i data-lucide="send"></i> <span id="singlePayoutText">DISBURSE NOW</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Batch Disbursements -->
-                <div class="bg-slate-900 text-white p-10 rounded-[3rem] shadow-xl space-y-6 border border-slate-800">
-                    <h2 class="text-xl font-black flex items-center gap-3 uppercase text-slate-100">
-                        <i data-lucide="layers" class="text-blue-400"></i> Batch Payouts
-                    </h2>
-                    <div class="p-8 border-2 border-dashed border-slate-700 rounded-[2.5rem] text-center bg-white/5">
-                        <i data-lucide="file-spreadsheet" class="mx-auto text-slate-500 mb-4 w-12 h-12"></i>
-                        <p class="text-xs text-slate-400 mb-6">Upload .xlsx or .csv settlement file</p>
-                        
-                        <input type="file" id="batchFile" hidden accept=".xlsx, .csv" onchange="updateFileName()">
-                        <label for="batchFile" id="fileLabel" class="cursor-pointer bg-white text-slate-900 px-6 py-2 rounded-xl font-bold text-xs hover:bg-slate-100 mb-6 inline-block">
-                            CHOOSE FILE
-                        </label>
-
-                        <button id="batchPayoutBtn" onclick="handleBatchUpload()" class="w-full bg-blue-500 text-white py-5 rounded-3xl font-black flex justify-center items-center gap-3 hover:bg-blue-400 transition disabled:opacity-50 mt-4">
-                            <i data-lucide="layers"></i> <span id="batchPayoutText">EXECUTE BATCH</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
         </main>
+
+        <footer class="mt-20 text-center text-slate-400 text-[10px] uppercase tracking-[0.2em] font-bold">
+            OneKhusa Node.js Reference &copy; 2026
+        </footer>
     </div>
 
     <script>
-        const socket = io();
-        
-        // --- 1. LANDING LOGIC (Handle Return from Checkout) ---
-        const urlParams = new URLSearchParams(window.location.search);
-        const refFromUrl = urlParams.get('ref');
-
-        if (refFromUrl) {
-            document.getElementById('verify-overlay').classList.remove('hidden');
-            checkPaymentStatus(refFromUrl);
+        function generateRef() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789';
+            let ref = '';
+            for (let i = 0; i < 15; i++) ref += chars[Math.floor(Math.random() * chars.length)];
+            document.getElementById('reference').value = ref;
         }
 
-        // --- 2. Real-time Status via WebSockets ---
-        socket.on('webhook_received', (data) => {
-            console.log("Webhook message received via Socket:", data);
-            // If the reference in URL matches the reference in Webhook
-            if (data.reference === refFromUrl && data.status === 'Paid') {
-                triggerSuccessUI();
-            }
-        });
-
-        // --- 3. Manual Polling Fallback ---
-        async function checkPaymentStatus(ref) {
-            try {
-                const res = await fetch(`/api/Tickets/status/${ref}`);
-                const data = await res.json();
-                
-                if (data.status === "Paid") {
-                    triggerSuccessUI();
-                } else {
-                    // Try again in 2.5 seconds
-                    setTimeout(() => checkPaymentStatus(ref), 2500);
-                }
-            } catch (e) {
-                setTimeout(() => checkPaymentStatus(ref), 5000);
-            }
-        }
-
-        function triggerSuccessUI() {
-            const iconContainer = document.getElementById('verify-icon');
-            iconContainer.classList.remove('animate-spin');
-            iconContainer.innerHTML = '<i data-lucide="check-circle" class="w-16 h-16 text-emerald-500"></i>';
-            document.getElementById('verify-title').innerText = "Payment Confirmed!";
-            document.getElementById('verify-msg').innerText = "Your ticket has been issued successfully.";
-            lucide.createIcons();
-
-            setTimeout(() => {
-                document.getElementById('verify-overlay').classList.add('hidden');
-                // Clean URL
-                window.history.replaceState({}, document.title, "/");
-                // Switch View
-                document.getElementById('view-tickets').classList.add('hidden');
-                document.getElementById('view-success').classList.remove('hidden');
-            }, 3000);
-        }
-
-        // --- 4. Standard View Switching ---
-        function switchView(view) {
-            document.querySelectorAll('.view-tab').forEach(t => t.className = 'px-8 py-2 rounded-xl font-bold text-xs text-slate-400');
-            document.getElementById(`tab-${view}`).className = 'px-8 py-2 rounded-xl font-bold text-xs bg-blue-600 text-white shadow-md';
-            
-            document.getElementById('view-tickets').classList.add('hidden');
-            document.getElementById('view-payouts').classList.add('hidden');
-            document.getElementById('view-success').classList.add('hidden');
-            document.getElementById(`view-${view}`).classList.remove('hidden');
-        }
-
-        // --- 5. Checkout Initiation ---
         async function handleBuy() {
+            const btn = document.getElementById('buyBtn');
             const btnText = document.getElementById('buyBtnText');
-            btnText.innerText = "REDIRECTING...";
+            const ref = document.getElementById('reference').value.trim();
+            const amount = document.getElementById('amount').value;
+            const description = document.getElementById('description').value.trim();
+
+            if (!ref || !amount || !description) {
+                alert('Please fill in the reference number, amount and description.');
+                return;
+            }
+
+            btn.disabled = true;
+            btnText.innerText = 'REDIRECTING...';
 
             try {
-                const res = await fetch('/api/Tickets/buy/showcase', { method: 'POST' });
+                const res = await fetch('/api/Tickets/buy/showcase', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reference: ref, amount: parseFloat(amount), description }),
+                });
                 const result = await res.json();
 
                 if (result.status === 'success') {
-                    // Redirect to OneKhusa Hosted Checkout
                     window.location.href = result.redirectUrl;
                 } else {
-                    alert("Checkout failed: " + result.message);
-                    btnText.innerText = "PURCHASE TICKET";
+                    alert('Checkout failed: ' + result.message);
+                    btnText.innerText = 'PURCHASE WITH HOSTED CHECKOUT';
+                    btn.disabled = false;
                 }
             } catch (err) {
-                alert("Connection error");
+                alert('Connection error');
+                btnText.innerText = 'PURCHASE WITH HOSTED CHECKOUT';
+                btn.disabled = false;
             }
         }
 
-        // --- 6. Single Payout Logic ---
-        async function handleSinglePayout() {
-            const amount = document.getElementById('payoutAmount').value;
-            const accountNumber = document.getElementById('payoutAccount').value;
-            const btnText = document.getElementById('singlePayoutText');
-            if (!accountNumber) return alert("Please enter account number");
-
-            btnText.innerText = "SENDING...";
-            try {
-                const res = await fetch('/api/payout/single', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ amount, accountNumber, beneficiaryName: "Garry Payout", connectorId: 221300 })
-                });
-                const result = await res.json();
-                if(result.status === 'success') alert(" Success! Ref: " + result.data.transactionReferenceNumber);
-                else alert(" Error: " + (result.details?.detail || result.message));
-            } catch (err) { alert("Network Error"); }
-            finally { btnText.innerText = "DISBURSE NOW"; }
-        }
-
-        // --- 7. Batch Payout Logic ---
-        function updateFileName() {
-            const file = document.getElementById('batchFile').files[0];
-            if (file) document.getElementById('fileLabel').innerText = file.name;
-        }
-
-        async function handleBatchUpload() {
-            const fileInput = document.getElementById('batchFile');
-            const btnText = document.getElementById('batchPayoutText');
-            if(!fileInput.files[0]) return alert("Please select a file first");
-
-            btnText.innerText = "UPLOADING...";
-            const formData = new FormData();
-            formData.append('batchFile', fileInput.files[0]);
-
-            try {
-                const res = await fetch('/api/payout/batch', { method: 'POST', body: formData });
-                const result = await res.json();
-                if(result.status === 'success') alert(" Batch Queued! ID: " + result.data.batchNumber);
-                else alert(" Upload Failed: " + JSON.stringify(result.details));
-            } catch (err) { alert("Network Error"); }
-            finally { btnText.innerText = "EXECUTE BATCH"; }
-        }
-
-        function resetApp() { location.reload(); }
         lucide.createIcons();
     </script>
 </body>

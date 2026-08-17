@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .scale-up { animation: scaleUp 0.4s ease-out forwards; }
+        @keyframes scaleUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 p-4 md:p-8 text-slate-900">
+
+    <!-- Verifying overlay (shown initially) -->
+    <div id="verify-overlay" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-12 rounded-[3rem] shadow-2xl text-center max-w-sm w-full scale-up">
+            <div id="verify-icon" class="text-blue-600 text-6xl mb-6 flex justify-center">
+                 <i data-lucide="loader-2" class="w-16 h-16 animate-spin"></i>
+            </div>
+            <h2 id="verify-title" class="text-2xl font-black text-slate-800">Verifying Payment</h2>
+            <p id="verify-msg" class="text-slate-500 mt-2">Connecting to OneKhusa... Please wait.</p>
+        </div>
+    </div>
+
+    <!-- Success view (hidden initially) -->
+    <div id="success-view" class="hidden max-w-xl mx-auto">
+        <div class="bg-white p-16 rounded-[3rem] border shadow-2xl text-center scale-up">
+            <i data-lucide="check-circle" class="mx-auto text-emerald-500 mb-6 w-20 h-20"></i>
+            <h2 class="text-4xl font-black mb-4">Payment Confirmed!</h2>
+            <p class="mb-8 text-slate-500 text-lg">Your ticket has been issued successfully.</p>
+            <a href="/" class="bg-blue-600 text-white px-12 py-4 rounded-[2rem] font-black uppercase tracking-widest hover:bg-blue-700 transition shadow-lg inline-block">
+                Buy Another Ticket
+            </a>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const ref = urlParams.get('ref');
+
+        if (!ref) {
+            // No reference — go home
+            window.location.href = '/';
+        } else {
+            pollStatus(ref);
+        }
+
+        async function pollStatus(ref) {
+            try {
+                const res = await fetch(`/api/Tickets/status/${ref}`);
+                const data = await res.json();
+
+                if (data.status === 'Paid') {
+                    showSuccess();
+                } else {
+                    setTimeout(() => pollStatus(ref), 2000);
+                }
+            } catch {
+                setTimeout(() => pollStatus(ref), 3000);
+            }
+        }
+
+        function showSuccess() {
+            const iconContainer = document.getElementById('verify-icon');
+            iconContainer.classList.remove('animate-spin', 'text-blue-600');
+            iconContainer.innerHTML = '<i data-lucide="check-circle" class="w-16 h-16 text-emerald-500"></i>';
+            document.getElementById('verify-title').innerText = 'Payment Confirmed!';
+            document.getElementById('verify-msg').innerText = 'Redirecting...';
+            lucide.createIcons();
+
+            setTimeout(() => {
+                document.getElementById('verify-overlay').classList.add('hidden');
+                document.getElementById('success-view').classList.remove('hidden');
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
