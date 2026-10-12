@@ -5,7 +5,10 @@
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
-    "dev": "node --watch src/app.js"
+    "dev": "node --watch src/app.js",
+    "test": "node --test",
+    "check:webhook": "node scripts/check-webhook-signature.js",
+    "webhook:hmac": "node webhook-debug/calculate-hmac.js --help"
   },
   "keywords": [],
   "author": "",
@@ -14,5 +17,15 @@
     "axios": "^1.15.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/garry0498/Onekhusa-Request-to-pay-Sample-Integration-Node-js.git"
+  },
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/garry0498/Onekhusa-Request-to-pay-Sample-Integration-Node-js/issues"
+  },
+  "homepage": "https://github.com/garry0498/Onekhusa-Request-to-pay-Sample-Integration-Node-js#readme"
 }

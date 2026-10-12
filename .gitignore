@@ -1,1 +1,7 @@
 .env
+
+# Webhook debug captures — raw gateway payloads and signatures must never
+# be committed.
+webhook-debug/captures/
+*.bin
+webhook-debug/*.local.json

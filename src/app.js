@@ -1,13 +1,3 @@
-/**
- * OneKhusa Hosted Checkout — Express entry point.
- *
- * Mirrors the Laravel and Python projects:
- *   routes/web.php   -> GET  "/"  (dashboard — served by Express static)
- *   routes/api.php   -> POST /api/Tickets/buy/:eventId  (initiate)
- *                     -> GET  /api/Tickets/status/:ref   (poll)
- *   WebhookController -> POST /webhooks/payments  (webhook)
- */
-
 const express = require('express');
 const path = require('path');
 const config = require('./config');
@@ -15,23 +5,38 @@ const routes = require('./routes');
 
 const app = express();
 
-// ---------------------------------------------------------------------------
-// Middleware
-// ---------------------------------------------------------------------------
+app.use('/webhooks', express.raw({ type: '*/*', limit: config.webhookBodyLimit }));
+
+try {
+  const { captureWebhook, isCaptureEnabled } = require('../webhook-debug/capture-webhook');
+
+  if (isCaptureEnabled()) {
+    app.use('/webhooks', captureWebhook);
+    console.log(
+      '🔍  Webhook raw-body capture ENABLED (WEBHOOK_CAPTURE_ENABLED) — debug only',
+    );
+  }
+} catch (error) {
+  console.warn(`Webhook capture unavailable: ${error.message}`);
+}
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '..', 'public')));
-
-// ---------------------------------------------------------------------------
-// Routes
-// ---------------------------------------------------------------------------
 app.use('/', routes);
 
-// ---------------------------------------------------------------------------
-// Start server
-// ---------------------------------------------------------------------------
-app.listen(config.port, () => {
-  console.log('-----------------------------------------------');
-  console.log(`🚀  OneTicket Checkout: http://localhost:${config.port}`);
-  console.log(`📡  Webhook Endpoint:  POST /webhooks/payments`);
-  console.log('-----------------------------------------------');
-});
+if (!config.webhookSecret) {
+  console.warn(
+    '⚠️   ONEKHUSA_WEBHOOK_SECRET is not set — webhooks will be rejected until it is.',
+  );
+}
+
+if (require.main === module) {
+  app.listen(config.port, () => {
+    console.log('-----------------------------------------------');
+    console.log(`🚀  OneTicket Checkout: http://localhost:${config.port}`);
+    console.log('📡  Webhook Endpoint:  POST /webhooks/payments (HMAC-SHA512 verified)');
+    console.log('-----------------------------------------------');
+  });
+}
+
+module.exports = app;

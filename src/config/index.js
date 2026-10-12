@@ -15,6 +15,25 @@ const config = {
   organisationId: process.env.ONEKHUSA_ORG_ID || '',
   merchantAccountNumber: parseInt(process.env.ONEKHUSA_MERCHANT_NUMBER, 10) || 0,
 
+  /**
+   * Webhook signing secret used to verify inbound OneKhusa callbacks.
+   * Separate from `apiSecret` — it comes from the OneKhusa portal webhook
+   * settings, not the API credentials block.
+   */
+  webhookSecret: process.env.ONEKHUSA_WEBHOOK_SECRET || '',
+
+  /**
+   * Webhook headers, in priority order.
+   *
+   * The published guide names these `X-OneKhusa-Webhook-Signature` and
+   * `OneKhusa-Webhook-Event`, but the live gateway actually sends the event
+   * code as `X-Onekhusa-Webhook-Event` (with the `X-` prefix). Both spellings
+   * are listed so either is accepted. Header lookup is case-insensitive.
+   */
+  webhookSignatureHeaders: ['X-OneKhusa-Webhook-Signature', 'OneKhusa-Webhook-Signature'],
+  webhookEventHeaders: ['X-Onekhusa-Webhook-Event', 'OneKhusa-Webhook-Event'],
+  webhookBodyLimit: '1mb',
+
   /** Public callback URL (e.g. ngrok tunnel) */
   publicCallbackUrl: process.env.PUBLIC_CALLBACK_URL || '',
 

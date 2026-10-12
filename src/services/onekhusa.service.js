@@ -48,6 +48,12 @@ class OneKhusaService {
       return this._token;
     }
 
+    if (!config.apiKey || !config.apiSecret || !config.organisationId || !config.merchantAccountNumber) {
+      throw new OneKhusaError(
+        'OneKhusa API configuration is incomplete. Set ONEKHUSA_API_KEY, ONEKHUSA_API_SECRET, ONEKHUSA_ORG_ID, and ONEKHUSA_MERCHANT_NUMBER.',
+      );
+    }
+
     try {
       const response = await axios.post(
         config.endpoints.getAccessToken,
@@ -71,7 +77,10 @@ class OneKhusaService {
       this._tokenExpiresAt = now + TOKEN_CACHE_TTL_MS;
       return token;
     } catch (error) {
-      if (error instanceof OneKhusaError) throw error;
+      if (error instanceof OneKhusaError) {
+        throw error;
+      }
+
       throw new OneKhusaError(`OneKhusa token error: ${error.message}`);
     }
   }
@@ -156,8 +165,9 @@ class OneKhusaService {
     try {
       const response = await axios.post(url, payload, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: 'Bearer ' + token,
           'Accept-Language': 'en',
+          'Content-Type': 'application/json',
           'X-Idempotency-Key': idempotencyKey,
         },
         timeout: 30_000,
@@ -167,12 +177,16 @@ class OneKhusaService {
 
       return response.data || {};
     } catch (error) {
-      if (error instanceof OneKhusaError) throw error;
+      if (error instanceof OneKhusaError) {
+        throw error;
+      }
+
       if (error.response) {
         throw new OneKhusaError(
           `OneKhusa ${context} error: ${JSON.stringify(error.response.data)}`,
         );
       }
+
       throw new OneKhusaError(`OneKhusa ${context} error: ${error.message}`);
     }
   }
